@@ -1,0 +1,22 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources xmlns:tools="http://schemas.android.com/tools">
+
+    <!-- Tema base do app (Material3 + escuro) -->
+    <style name="Theme.NCImportMine" parent="Theme.Material3.Dark.NoActionBar">
+        <item name="android:statusBarColor">@android:color/transparent</item>
+        <item name="android:navigationBarColor">@android:color/transparent</item>
+        <item name="android:windowBackground">@color/nc_black_deep</item>
+        <item name="android:enforceStatusBarContrast" tools:targetApi="q">false</item>
+        <item name="android:enforceNavigationBarContrast" tools:targetApi="q">false</item>
+    </style>
+
+    <!-- Tema da Splash Screen (API 31+) -->
+    <style name="Theme.NCImportMine.SplashScreen" parent="Theme.NCImportMine">
+        <!-- Ícone centralizado -->
+        <item name="android:windowSplashScreenBackground">@color/nc_black_deep</item>
+        <item name="android:windowSplashScreenAnimatedIcon">@drawable/ic_splash</item>
+        <item name="android:windowSplashScreenBrandingImage">@drawable/ic_splash</item>
+        <item name="postSplashScreenTheme">@style/Theme.NCImportMine</item>
+    </style>
+
+</resources>

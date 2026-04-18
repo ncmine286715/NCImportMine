@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="app_name">NCMINE Addon Finder</string>
+    <string name="app_description">O Melhor Importador de Add-ons para Minecraft</string>
+
+    <!-- Permissões -->
+    <string name="permission_storage_title">Acesso ao Armazenamento</string>
+    <string name="permission_storage_message">O NCMINE Addon Finder precisa acessar seu armazenamento para localizar e importar seus conteúdos do Minecraft.</string>
+    <string name="permission_grant">Conceder Acesso</string>
+
+    <!-- Botões -->
+    <string name="btn_scan">Buscar Add-ons Agora</string>
+    <string name="btn_import">IMPORTAR PARA MINECRAFT</string>
+    <string name="btn_retry">Tentar Novamente</string>
+
+    <!-- Status -->
+    <string name="status_scanning">Procurando arquivos…</string>
+    <string name="status_empty">Nenhum add-on encontrado nos Downloads</string>
+    <string name="status_success">Importado com sucesso!</string>
+    <string name="status_error">Ocorreu um erro ao importar</string>
+    <string name="status_backup_created">Backup criado com sucesso</string>
+
+    <!-- Tipos de pacote -->
+    <string name="pack_type_resource">Resource Pack</string>
+    <string name="pack_type_behavior">Behavior Pack</string>
+    <string name="pack_type_world">World Template</string>
+    <string name="pack_type_skin">Skin Pack</string>
+    <string name="pack_type_addon">Minecraft Add-on (.mcaddon)</string>
+    <string name="pack_type_unknown">Pack Desconhecido</string>
+
+    <!-- Mensagens -->
+    <string name="msg_no_minecraft">Minecraft Bedrock não detectado.</string>
+    <string name="msg_no_files">Coloque seus arquivos .mcpack, .mcworld ou .mcaddon na pasta de Downloads.</string>
+    <string name="msg_converting">Processando arquivo…</string>
+    <string name="msg_backing_up">Realizando backup de segurança…</string>
+    <string name="msg_importing">Enviando para o Minecraft…</string>
+</resources>

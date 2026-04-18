@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:aapt="http://schemas.android.com/aapt"
+    android:width="200dp"
+    android:height="200dp"
+    android:viewportWidth="200"
+    android:viewportHeight="200">
+
+    <!-- Glowing Outer Aura -->
+    <path
+        android:pathData="M100,100m-90,0a90,90 0,1 1,180 0a90,90 0,1 1,-180 0">
+        <aapt:attr name="android:fillColor">
+            <gradient
+                android:centerX="100"
+                android:centerY="100"
+                android:gradientRadius="90"
+                android:type="radial">
+                <item android:color="#333FB950" android:offset="0.0" />
+                <item android:color="#003FB950" android:offset="1.0" />
+            </gradient>
+        </aapt:attr>
+    </path>
+
+    <!-- Emerald Gem Core -->
+    <!-- Base Shape -->
+    <path
+        android:fillColor="#2D8A3A"
+        android:pathData="M100,30 L160,65 L160,135 L100,170 L40,135 L40,65 Z" />
+
+    <!-- Top Facet -->
+    <path
+        android:fillColor="#58D069"
+        android:pathData="M100,30 L160,65 L100,100 L40,65 Z" />
+
+    <!-- Right Facet -->
+    <path
+        android:fillColor="#3FB950"
+        android:pathData="M100,100 L160,65 L160,135 L100,170 Z" />
+
+    <!-- Left Facet -->
+    <path
+        android:fillColor="#1E5C26"
+        android:pathData="M100,100 L40,65 L40,135 L100,170 Z" />
+
+    <!-- Shine / Highlight -->
+    <path
+        android:fillColor="#FFFFFF"
+        android:fillAlpha="0.3"
+        android:pathData="M70,55 L100,45 L130,55 L100,65 Z" />
+
+    <!-- Cyber-Folder Overlay Lines -->
+    <path
+        android:strokeColor="#3FB950"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M50,150 L30,150 L30,50 L60,50 L80,35 L120,35"
+        android:fillColor="#00000000" />
+
+    <path
+        android:strokeColor="#3FB950"
+        android:strokeWidth="4"
+        android:strokeLineCap="round"
+        android:pathData="M150,50 L170,50 L170,150 L140,150"
+        android:fillColor="#00000000" />
+
+    <!-- Technical Scan Line -->
+    <path
+        android:strokeColor="#FFFFFF"
+        android:strokeWidth="1"
+        android:strokeAlpha="0.5"
+        android:pathData="M30,100 L170,100" />
+
+</vector>

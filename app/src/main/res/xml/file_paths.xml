@@ -1,0 +1,29 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <!-- Armazenamento externo público (Downloads, etc.) -->
+    <external-path
+        name="external_files"
+        path="." />
+
+    <!-- Armazenamento externo de mídia -->
+    <external-files-path
+        name="external_app_files"
+        path="." />
+
+    <!-- Cache interno (ícones temporários) -->
+    <cache-path
+        name="cache"
+        path="." />
+
+    <!-- Pasta do app no armazenamento externo -->
+    <external-path
+        name="nc_import_mine"
+        path="NC Import Mine/" />
+
+    <!-- Pasta de Downloads específica -->
+    <external-path
+        name="downloads"
+        path="Download/" />
+
+</paths>

@@ -1,0 +1,26 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <!-- Backgrounds -->
+    <color name="nc_black_deep">#0A0A0A</color>
+    <color name="nc_black_card">#111111</color>
+    <color name="nc_black_surface">#161616</color>
+    <color name="nc_black_border">#222222</color>
+
+    <!-- Verde Neon Principal -->
+    <color name="nc_green_neon">#00FF9F</color>
+    <color name="nc_green_neon_dim">#00CC7A</color>
+    <color name="nc_green_neon_dark">#004D30</color>
+
+    <!-- Status -->
+    <color name="nc_error">#FF4444</color>
+    <color name="nc_warning">#FFAA00</color>
+    <color name="nc_info">#00B4FF</color>
+
+    <!-- Textos -->
+    <color name="nc_text_primary">#F0F0F0</color>
+    <color name="nc_text_secondary">#888888</color>
+    <color name="nc_text_muted">#444444</color>
+
+    <!-- AdMob -->
+    <color name="ad_banner_background">#0D0D0D</color>
+</resources>
