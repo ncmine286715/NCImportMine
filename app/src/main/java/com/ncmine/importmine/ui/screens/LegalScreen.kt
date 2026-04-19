@@ -1,6 +1,10 @@
 package com.ncmine.importmine.ui.screens
 
+import android.content.Intent
+import android.net.Uri
 import android.view.ViewGroup
+import android.webkit.WebResourceRequest
+import android.webkit.WebSettings
 import android.webkit.WebView
 import android.webkit.WebViewClient
 import androidx.compose.foundation.background
@@ -73,14 +77,42 @@ fun LegalScreen(
                                     hasError = true
                                     isLoading = false
                                 }
+
+                                override fun shouldOverrideUrlLoading(
+                                    view: WebView?,
+                                    request: WebResourceRequest?
+                                ): Boolean {
+                                    val url = request?.url?.toString() ?: return false
+                                    
+                                    // Trata links externos e esquemas especiais (como intent:// do Terabox/outros)
+                                    if (url.startsWith("intent://") || url.contains("play.google.com") || url.startsWith("market://")) {
+                                        try {
+                                            val intent = Intent.parseUri(url, Intent.URI_INTENT_SCHEME)
+                                            context.startActivity(intent)
+                                            return true
+                                        } catch (e: Exception) {
+                                            return false
+                                        }
+                                    }
+                                    
+                                    // Mantém a navegação dentro do WebView para links http/https normais
+                                    return false
+                                }
                             }
                             settings.javaScriptEnabled = true
                             settings.domStorageEnabled = true
+                            settings.databaseEnabled = true
                             settings.setSupportZoom(true)
                             settings.builtInZoomControls = true
                             settings.displayZoomControls = false
                             settings.useWideViewPort = true
                             settings.loadWithOverviewMode = true
+                            settings.cacheMode = WebSettings.LOAD_DEFAULT
+                            settings.mixedContentMode = WebSettings.MIXED_CONTENT_ALWAYS_ALLOW
+                            
+                            // User Agent moderno para evitar que sites bloqueiem o WebView
+                            settings.userAgentString = "Mozilla/5.0 (Linux; Android 10; K) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/119.0.0.0 Mobile Safari/537.36"
+
                             loadUrl(url)
                         }
                     },

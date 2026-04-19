@@ -184,6 +184,13 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /**
+     * Atalho para iniciar uma varredura rápida
+     */
+    fun refreshPacks() {
+        startFastScan()
+    }
+
+    /**
      * Inicia a Ultra Varredura (inclui ZIPs e análise de manifest/ícones)
      * Atualiza a lista conforme processa cada arquivo
      */
