@@ -6,7 +6,10 @@ import android.net.Uri
 import android.os.Environment
 import android.util.Log
 import androidx.core.content.FileProvider
+import dagger.hilt.android.qualifiers.ApplicationContext
 import java.io.File
+import javax.inject.Inject
+import javax.inject.Singleton
 
 private const val TAG = "PackConverter"
 private const val OUTPUT_FOLDER = "NC Import Mine/Converted"
@@ -14,7 +17,8 @@ private const val OUTPUT_FOLDER = "NC Import Mine/Converted"
 /**
  * Responsável por converter arquivos ZIP em MCPACK e iniciar a importação no Minecraft
  */
-object PackConverter {
+@Singleton
+class PackConverter @Inject constructor(@ApplicationContext private val context: Context) {
 
     /**
      * Retorna o diretório de saída seguro para compartilhamento

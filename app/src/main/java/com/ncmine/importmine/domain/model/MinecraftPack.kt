@@ -100,6 +100,17 @@ data class MinecraftPack(
             PackType.ADDON -> "Minecraft Add-on"
             PackType.UNKNOWN -> "Add-on"
         }
+
+    /** Cor do badge baseada no tipo de pacote (Long para Compose Color) */
+    val packTypeBadgeColor: Long
+        get() = when (packType) {
+            PackType.RESOURCE_PACK -> 0xFF00E676 // NcGreenNeon
+            PackType.BEHAVIOR_PACK -> 0xFF2979FF // Azul
+            PackType.WORLD_TEMPLATE -> 0xFFFFC107 // Amber
+            PackType.SKIN_PACK -> 0xFFE91E63 // Rosa
+            PackType.ADDON -> 0xFF00E676 // NcGreenNeon
+            PackType.UNKNOWN -> 0xFF9E9E9E // Cinza
+        }
 }
 
 /**

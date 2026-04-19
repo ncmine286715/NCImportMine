@@ -38,4 +38,9 @@ interface AddonRepository {
      * Remove um addon da lista de detectados
      */
     suspend fun deleteAddon(pack: MinecraftPack): Result<Unit>
+
+    /**
+     * Verifica se o Minecraft está instalado no dispositivo
+     */
+    fun isMinecraftInstalled(): Boolean
 }

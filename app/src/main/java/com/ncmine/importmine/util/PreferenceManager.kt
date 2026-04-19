@@ -1,12 +1,16 @@
 package com.ncmine.importmine.util
 
 import android.content.Context
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import android.content.SharedPreferences
 
 /**
  * Gerencia a persistência simples de Favoritos e Histórico
  */
-class PreferenceManager(context: Context) {
+@Singleton
+class PreferenceManager @Inject constructor(@ApplicationContext private val context: Context) {
     private val prefs: SharedPreferences = context.getSharedPreferences("ncmine_prefs", Context.MODE_PRIVATE)
 
     companion object {
@@ -46,8 +50,20 @@ class PreferenceManager(context: Context) {
         prefs.edit().remove(KEY_HISTORY).apply()
     }
 
+    fun removeHistory(id: String) {
+        val history = getHistory().toMutableSet()
+        history.remove(id)
+        prefs.edit().putStringSet(KEY_HISTORY, history).apply()
+    }
+
     fun clearFavorites() {
         prefs.edit().remove(KEY_FAVORITES).apply()
+    }
+
+    fun removeFavorite(id: String) {
+        val favorites = getFavorites().toMutableSet()
+        favorites.remove(id)
+        prefs.edit().putStringSet(KEY_FAVORITES, favorites).apply()
     }
 
     // Salva o ID por path para persistência entre scans (já que o ID aleatório muda)

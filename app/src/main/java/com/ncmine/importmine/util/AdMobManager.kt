@@ -4,11 +4,21 @@ import android.app.Activity
 import android.content.Context
 import android.util.Log
 import android.widget.Toast
-import com.google.android.gms.ads.*
+import com.google.android.gms.ads.AdError
+import com.google.android.gms.ads.AdRequest
+import com.google.android.gms.ads.FullScreenContentCallback
+import com.google.android.gms.ads.LoadAdError
+import com.google.android.gms.ads.MobileAds
+import com.google.android.gms.ads.RequestConfiguration
 import com.google.android.gms.ads.interstitial.InterstitialAd
 import com.google.android.gms.ads.interstitial.InterstitialAdLoadCallback
 import com.google.android.gms.ads.rewarded.RewardedAd
 import com.google.android.gms.ads.rewarded.RewardedAdLoadCallback
+
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
+
 
 private const val TAG = "NC_ADS"
 
@@ -18,38 +28,20 @@ private const val BANNER_AD_UNIT_ID = "ca-app-pub-8967995144964134/3519728209"
 private const val REWARDED_AD_UNIT_ID = "ca-app-pub-8967995144964134/4648977046"
 private const val INTERSTITIAL_AD_UNIT_ID = "ca-app-pub-8967995144964134/7267401520" // Usando o ID que estava como Native para Interstitial se necessário, ou solicitar novo
 
-object AdMobManager {
+@Singleton
+class AdMobManager @Inject constructor(@ApplicationContext private val context: Context) {
 
     private var rewardedAd: RewardedAd? = null
     private var interstitialAd: InterstitialAd? = null
-    private var isInitialized = false
     private var isLoadingRewarded = false
     private var isLoadingInterstitial = false
     
-    // Estado Premium (deve ser persistido via DataStore/SharedPreferences)
-    var isPremium: Boolean = false
+    // Estado Premium persistido
+    var isPremium: Boolean
+        get() = context.getSharedPreferences("ncmine_prefs", Context.MODE_PRIVATE).getBoolean("is_premium", false)
+        set(value) = context.getSharedPreferences("ncmine_prefs", Context.MODE_PRIVATE).edit().putBoolean("is_premium", value).apply()
 
-    /**
-     * Inicializa o SDK e configura os logs
-     */
-    fun initialize(context: Context) {
-        if (isInitialized) return
-        
-        Log.d(TAG, "Iniciando inicialização do AdMob...")
-        
-        MobileAds.initialize(context) { status ->
-            isInitialized = true
-            Log.d(TAG, "AdMob inicializado com sucesso!")
-            
-            val configuration = RequestConfiguration.Builder().build()
-            MobileAds.setRequestConfiguration(configuration)
-            
-            if (!isPremium) {
-                loadRewardedAd(context)
-                loadInterstitialAd(context)
-            }
-        }
-    }
+
 
     /**
      * Carrega o anúncio de vídeo premiado
@@ -153,4 +145,6 @@ object AdMobManager {
     }
 
     fun getBannerAdUnitId(): String = BANNER_AD_UNIT_ID
+
+    fun createAdRequest(): AdRequest = AdRequest.Builder().build()
 }

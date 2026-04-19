@@ -1,6 +1,10 @@
 package com.ncmine.importmine.util
 
+import android.content.Context
 import android.os.Environment
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Inject
+import javax.inject.Singleton
 import android.util.Log
 import java.io.File
 import java.text.SimpleDateFormat
@@ -13,7 +17,8 @@ private const val BACKUP_FOLDER = "NC Import Mine/Backup"
  * Gerencia o backup automático dos arquivos originais
  * Nunca deixa o usuário perder um arquivo!
  */
-object BackupManager {
+@Singleton
+class BackupManager @Inject constructor(@ApplicationContext private val context: Context) {
 
     /**
      * Retorna o diretório de backup (cria se não existir)

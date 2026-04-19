@@ -3,12 +3,15 @@ package com.ncmine.importmine.util
 import android.content.Context
 import android.os.Environment
 import android.util.Log
-import com.ncmine.importmine.model.PackType
+import com.ncmine.importmine.domain.model.PackType
 import com.google.gson.JsonParser
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOn
+import dagger.hilt.android.qualifiers.ApplicationContext
+import javax.inject.Singleton
+import javax.inject.Inject
 import java.io.File
 import java.io.FileInputStream
 import java.util.zip.ZipEntry
@@ -19,7 +22,8 @@ private const val TAG = "FileScanner"
 /**
  * Responsável por escanear diretórios e detectar arquivos Minecraft válidos
  */
-object FileScanner {
+@Singleton
+class FileScanner @Inject constructor(@ApplicationContext private val context: Context) {
 
     // Extensões que o app processa
     private val SUPPORTED_EXTENSIONS = setOf("mcpack", "mcworld", "mcaddon", "zip")
@@ -30,105 +34,47 @@ object FileScanner {
     private val WORLD_TEMPLATE_FOLDERS = setOf("world_template", "db", "level.dat")
 
     /**
-     * Escaneia diretórios e emite arquivos encontrados um por um via Flow
+     * Escaneia diretórios e emite arquivos encontrados um por um via Flow.
+     * Otimizado para evitar recursão excessiva e garantir emissão fluida.
      */
     fun scanAllDirectoriesFlow(context: Context): Flow<File> = flow {
-        // 1. Pasta Downloads
-        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        if (downloadsDir.exists() && downloadsDir.canRead()) {
-            scanDirectoryFlow(downloadsDir).collect { emit(it) }
-        }
-
+        val roots = mutableListOf<File>()
+        
+        // 1. Pasta Downloads (Principal fonte de addons)
+        roots.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS))
+        
         // 2. Pasta Documents
-        val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-        if (documentsDir.exists() && documentsDir.canRead()) {
-            scanDirectoryFlow(documentsDir).collect { emit(it) }
-        }
+        roots.add(Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS))
+        
+        // 3. Pasta do Minecraft (Legado)
+        roots.add(File(Environment.getExternalStorageDirectory(), "games/com.mojang"))
+        
+        // 4. Raiz do armazenamento
+        roots.add(Environment.getExternalStorageDirectory())
 
-        // 3. Pasta do Minecraft
-        val minecraftDir = File(Environment.getExternalStorageDirectory(), "games/com.mojang")
-        if (minecraftDir.exists() && minecraftDir.canRead()) {
-            scanDirectoryFlow(minecraftDir, depth = 2).collect { emit(it) }
-        }
-
-        // 4. Raiz (apenas arquivos diretos)
-        val externalDir = Environment.getExternalStorageDirectory()
-        if (externalDir.exists() && externalDir.canRead()) {
-            externalDir.listFiles()?.forEach { file ->
-                if (file.isFile && isSupportedFile(file)) {
-                    emit(file)
-                }
+        roots.distinct().forEach { root ->
+            if (root.exists() && root.canRead()) {
+                scanDirectoryRecursive(root, if (root.name == "com.mojang") 2 else 5).collect { emit(it) }
             }
         }
     }.flowOn(Dispatchers.IO)
 
-    private fun scanDirectoryFlow(dir: File, depth: Int = 5, currentDepth: Int = 0): Flow<File> = flow {
-        if (currentDepth > depth || !dir.exists() || !dir.canRead()) return@flow
+    private fun scanDirectoryRecursive(dir: File, maxDepth: Int, currentDepth: Int = 0): Flow<File> = flow {
+        if (currentDepth > maxDepth || !dir.exists() || !dir.canRead()) return@flow
 
-        try {
-            dir.listFiles()?.forEach { file ->
-                when {
-                    file.isFile && isSupportedFile(file) -> {
-                        emit(file)
-                    }
-                    file.isDirectory && !isSystemDirectory(file) -> {
-                        scanDirectoryFlow(file, depth, currentDepth + 1).collect { emit(it) }
-                    }
+        val files = dir.listFiles() ?: return@flow
+        for (file in files) {
+            if (file.isFile) {
+                if (isSupportedFile(file)) {
+                    emit(file)
                 }
+            } else if (file.isDirectory && !isSystemDirectory(file)) {
+                scanDirectoryRecursive(file, maxDepth, currentDepth + 1).collect { emit(it) }
             }
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao escanear ${dir.absolutePath}: ${e.message}")
         }
     }
 
-    /**
-     * Escaneia todos os diretórios configurados e retorna a lista de pacotes encontrados (versão síncrona/legado)
-     */
-    fun scanAllDirectories(context: Context): List<File> {
-        val foundFiles = mutableListOf<File>()
 
-        val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        if (downloadsDir.exists() && downloadsDir.canRead()) {
-            foundFiles.addAll(scanDirectory(downloadsDir))
-        }
-
-        val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-        if (documentsDir.exists() && documentsDir.canRead()) {
-            foundFiles.addAll(scanDirectory(documentsDir))
-        }
-
-        val minecraftDir = File(Environment.getExternalStorageDirectory(), "games/com.mojang")
-        if (minecraftDir.exists() && minecraftDir.canRead()) {
-            foundFiles.addAll(scanDirectory(minecraftDir, depth = 2))
-        }
-
-        val externalDir = Environment.getExternalStorageDirectory()
-        if (externalDir.exists() && externalDir.canRead()) {
-            externalDir.listFiles()?.forEach { file ->
-                if (file.isFile && isSupportedFile(file)) {
-                    if (!foundFiles.contains(file)) foundFiles.add(file)
-                }
-            }
-        }
-
-        return foundFiles.distinctBy { it.absolutePath }
-    }
-
-    private fun scanDirectory(dir: File, depth: Int = 5, currentDepth: Int = 0): List<File> {
-        if (currentDepth > depth || !dir.exists() || !dir.canRead()) return emptyList()
-        val files = mutableListOf<File>()
-        try {
-            dir.listFiles()?.forEach { file ->
-                when {
-                    file.isFile && isSupportedFile(file) -> files.add(file)
-                    file.isDirectory && !isSystemDirectory(file) -> files.addAll(scanDirectory(file, depth, currentDepth + 1))
-                }
-            }
-        } catch (e: Exception) {
-            Log.e(TAG, "Erro ao escanear ${dir.absolutePath}: ${e.message}")
-        }
-        return files
-    }
 
     /**
      * Verifica se um arquivo tem extensão suportada

@@ -15,13 +15,13 @@ import androidx.compose.foundation.layout.*
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material.icons.Icons
 import androidx.compose.material.icons.filled.FolderOpen
-import androidx.compose.material.icons.filled.Lock
 import androidx.compose.material.icons.filled.Security
 import androidx.compose.material3.*
 import androidx.compose.runtime.*
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.draw.shadow
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
@@ -31,29 +31,15 @@ import androidx.compose.ui.unit.sp
 import com.google.accompanist.permissions.*
 import com.ncmine.importmine.ui.theme.*
 
-/**
- * Tela de solicitação de permissão de armazenamento
- * Explica claramente por que a permissão é necessária
- */
 @OptIn(ExperimentalPermissionsApi::class)
 @Composable
 fun PermissionScreen(
     onPermissionGranted: () -> Unit
 ) {
     val context = LocalContext.current
-
-    // Para Android 11+: MANAGE_EXTERNAL_STORAGE
-    // Para Android 8-10: READ/WRITE_EXTERNAL_STORAGE
     val needsManagePermission = Build.VERSION.SDK_INT >= Build.VERSION_CODES.R
+    val storagePermission = rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE)
 
-    // Estado de permissão usando Accompanist
-    val storagePermission = if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.TIRAMISU) {
-        rememberPermissionState(Manifest.permission.READ_MEDIA_IMAGES)
-    } else {
-        rememberPermissionState(Manifest.permission.READ_EXTERNAL_STORAGE)
-    }
-
-    // Verifica se tem permissão total de armazenamento (Android 11+)
     var hasManageStoragePermission by remember {
         mutableStateOf(
             if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
@@ -62,7 +48,6 @@ fun PermissionScreen(
         )
     }
 
-    // Launcher para abrir configurações de permissão especial
     val manageStorageLauncher = rememberLauncherForActivityResult(
         ActivityResultContracts.StartActivityForResult()
     ) {
@@ -72,7 +57,6 @@ fun PermissionScreen(
         }
     }
 
-    // Verifica se já tem tudo que precisa
     LaunchedEffect(storagePermission.status, hasManageStoragePermission) {
         val hasBasicPermission = storagePermission.status.isGranted
         if (needsManagePermission && hasManageStoragePermission) {
@@ -94,96 +78,118 @@ fun PermissionScreen(
                 .padding(32.dp),
             horizontalAlignment = Alignment.CenterHorizontally
         ) {
-            // Ícone grande
+            // Ícone animado
+            val infiniteTransition = rememberInfiniteTransition(label = "icon_anim")
+            val scale by infiniteTransition.animateFloat(
+                initialValue = 1f,
+                targetValue = 1.1f,
+                animationSpec = infiniteRepeatable(
+                    animation = tween(1500, easing = FastOutSlowInEasing),
+                    repeatMode = RepeatMode.Reverse
+                ),
+                label = "scale"
+            )
+
             Box(
                 modifier = Modifier
-                    .size(96.dp)
-                    .clip(RoundedCornerShape(24.dp))
+                    .size(110.dp)
+                    .shadow(20.dp, RoundedCornerShape(32.dp), spotColor = NcGreenNeon)
+                    .clip(RoundedCornerShape(32.dp))
                     .background(NcGreenNeonDark)
-                    .border(2.dp, NcGreenNeon, RoundedCornerShape(24.dp)),
+                    .border(2.dp, NcGreenNeon, RoundedCornerShape(32.dp)),
                 contentAlignment = Alignment.Center
             ) {
                 Icon(
                     imageVector = Icons.Default.FolderOpen,
                     contentDescription = null,
                     tint = NcGreenNeon,
-                    modifier = Modifier.size(48.dp)
+                    modifier = Modifier.size(56.dp)
                 )
             }
 
-            Spacer(modifier = Modifier.height(28.dp))
+            Spacer(modifier = Modifier.height(32.dp))
 
             Text(
-                text = "Permissão de\nArmazenamento",
-                style = MaterialTheme.typography.displayMedium.copy(
+                text = "Acesso ao\nArmazenamento",
+                style = MaterialTheme.typography.displaySmall.copy(
                     color = NcTextPrimary,
                     fontWeight = FontWeight.ExtraBold,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    lineHeight = 42.sp
                 )
             )
 
-            Spacer(modifier = Modifier.height(16.dp))
+            Spacer(modifier = Modifier.height(20.dp))
+
+            Text(
+                text = "Precisamos de permissão para encontrar e converter seus addons do Minecraft.",
+                style = MaterialTheme.typography.bodyMedium.copy(
+                    color = NcTextSecondary,
+                    textAlign = TextAlign.Center
+                ),
+                modifier = Modifier.padding(horizontal = 16.dp)
+            )
+
+            Spacer(modifier = Modifier.height(32.dp))
 
             // Explicação clara
             Card(
                 modifier = Modifier.fillMaxWidth(),
-                shape = RoundedCornerShape(16.dp),
+                shape = RoundedCornerShape(24.dp),
                 colors = CardDefaults.cardColors(containerColor = NcBlackCard),
                 border = androidx.compose.foundation.BorderStroke(
-                    1.dp, NcGreenNeon.copy(alpha = 0.2f)
+                    1.dp, NcGreenNeon.copy(alpha = 0.15f)
                 )
             ) {
-                Column(modifier = Modifier.padding(20.dp)) {
+                Column(modifier = Modifier.padding(24.dp)) {
                     PermissionItem(
                         emoji = "📁",
-                        title = "Acessar pasta Downloads",
-                        description = "Para encontrar seus arquivos .mcpack e .mcworld"
+                        title = "Encontrar Addons",
+                        description = "Escaneia sua pasta Downloads por arquivos .mcpack e .zip"
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     PermissionItem(
                         emoji = "💾",
-                        title = "Criar backups automáticos",
-                        description = "Salva cópias em NC Import Mine/Backup"
+                        title = "Backups Seguros",
+                        description = "Cria cópias de segurança antes de converter arquivos"
                     )
-                    Spacer(modifier = Modifier.height(16.dp))
+                    Spacer(modifier = Modifier.height(20.dp))
                     PermissionItem(
                         emoji = "🔄",
-                        title = "Converter arquivos ZIP",
-                        description = "Salva o .mcpack convertido no seu dispositivo"
+                        title = "Conversão Inteligente",
+                        description = "Transforma arquivos ZIP em formatos que o Minecraft entende"
                     )
                 }
             }
 
             if (needsManagePermission) {
-                Spacer(modifier = Modifier.height(12.dp))
-                Card(
+                Spacer(modifier = Modifier.height(16.dp))
+                Surface(
                     modifier = Modifier.fillMaxWidth(),
-                    colors = CardDefaults.cardColors(
-                        containerColor = NcWarning.copy(alpha = 0.08f)
-                    ),
+                    color = NcWarning.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(16.dp),
                     border = androidx.compose.foundation.BorderStroke(
                         1.dp, NcWarning.copy(alpha = 0.3f)
-                    ),
-                    shape = RoundedCornerShape(12.dp)
+                    )
                 ) {
                     Row(
-                        modifier = Modifier.padding(14.dp),
-                        verticalAlignment = Alignment.Top
+                        modifier = Modifier.padding(16.dp),
+                        verticalAlignment = Alignment.CenterVertically
                     ) {
-                        Text("⚠️", fontSize = 18.sp)
-                        Spacer(modifier = Modifier.width(10.dp))
+                        Text("⚠️", fontSize = 20.sp)
+                        Spacer(modifier = Modifier.width(12.dp))
                         Column {
                             Text(
-                                text = "Android 11+ requer permissão especial",
+                                text = "Atenção Usuário Android 11+",
                                 style = MaterialTheme.typography.labelLarge.copy(
                                     color = NcWarning, fontWeight = FontWeight.Bold
                                 )
                             )
-                            Spacer(modifier = Modifier.height(4.dp))
                             Text(
-                                text = "Na próxima tela, encontre \"NC Import Mine\" e ative \"Permitir gerenciamento de todos os arquivos\".",
+                                text = "Ative \"Permitir gerenciamento de todos os arquivos\" para o NC Import Mine na próxima tela.",
                                 style = MaterialTheme.typography.bodySmall.copy(
-                                    color = NcTextSecondary
+                                    color = NcTextSecondary,
+                                    lineHeight = 16.sp
                                 )
                             )
                         }
@@ -191,24 +197,30 @@ fun PermissionScreen(
                 }
             }
 
-            Spacer(modifier = Modifier.height(32.dp))
+            Spacer(modifier = Modifier.height(40.dp))
 
             // Botão principal
             Button(
                 onClick = {
                     if (needsManagePermission && Build.VERSION.SDK_INT >= Build.VERSION_CODES.R) {
-                        val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
-                            data = Uri.parse("package:${context.packageName}")
+                        try {
+                            val intent = Intent(Settings.ACTION_MANAGE_APP_ALL_FILES_ACCESS_PERMISSION).apply {
+                                data = Uri.parse("package:${context.packageName}")
+                            }
+                            manageStorageLauncher.launch(intent)
+                        } catch (e: Exception) {
+                            val intent = Intent(Settings.ACTION_MANAGE_ALL_FILES_ACCESS_PERMISSION)
+                            manageStorageLauncher.launch(intent)
                         }
-                        manageStorageLauncher.launch(intent)
                     } else {
                         storagePermission.launchPermissionRequest()
                     }
                 },
                 modifier = Modifier
                     .fillMaxWidth()
-                    .height(56.dp),
-                shape = RoundedCornerShape(14.dp),
+                    .height(64.dp)
+                    .shadow(12.dp, RoundedCornerShape(20.dp), spotColor = NcGreenNeon),
+                shape = RoundedCornerShape(20.dp),
                 colors = ButtonDefaults.buttonColors(
                     containerColor = NcGreenNeon,
                     contentColor = NcBlackDeep
@@ -217,24 +229,26 @@ fun PermissionScreen(
                 Icon(
                     imageVector = Icons.Default.Security,
                     contentDescription = null,
-                    modifier = Modifier.size(20.dp)
+                    modifier = Modifier.size(24.dp)
                 )
-                Spacer(modifier = Modifier.width(8.dp))
+                Spacer(modifier = Modifier.width(12.dp))
                 Text(
-                    text = "Conceder Permissão",
+                    text = "CONCEDER ACESSO",
                     style = MaterialTheme.typography.titleMedium.copy(
-                        fontWeight = FontWeight.ExtraBold
+                        fontWeight = FontWeight.Black,
+                        letterSpacing = 1.sp
                     )
                 )
             }
 
-            Spacer(modifier = Modifier.height(12.dp))
+            Spacer(modifier = Modifier.height(20.dp))
 
             Text(
-                text = "🔒 Seus dados ficam no dispositivo.\nNenhuma informação é enviada para servidores.",
+                text = "🔒 Privacidade Garantida\nSeus arquivos nunca saem do seu dispositivo.",
                 style = MaterialTheme.typography.labelSmall.copy(
                     color = NcTextMuted,
-                    textAlign = TextAlign.Center
+                    textAlign = TextAlign.Center,
+                    lineHeight = 16.sp
                 )
             )
         }
@@ -248,19 +262,29 @@ private fun PermissionItem(
     description: String
 ) {
     Row(verticalAlignment = Alignment.Top) {
-        Text(text = emoji, fontSize = 20.sp, modifier = Modifier.width(32.dp))
+        Surface(
+            modifier = Modifier.size(40.dp),
+            color = NcBlackSurface,
+            shape = RoundedCornerShape(10.dp)
+        ) {
+            Box(contentAlignment = Alignment.Center) {
+                Text(text = emoji, fontSize = 20.sp)
+            }
+        }
+        Spacer(modifier = Modifier.width(16.dp))
         Column {
             Text(
                 text = title,
                 style = MaterialTheme.typography.labelLarge.copy(
                     color = NcTextPrimary,
-                    fontWeight = FontWeight.SemiBold
+                    fontWeight = FontWeight.Bold
                 )
             )
             Text(
                 text = description,
                 style = MaterialTheme.typography.bodySmall.copy(
-                    color = NcTextSecondary
+                    color = NcTextSecondary,
+                    lineHeight = 16.sp
                 )
             )
         }
