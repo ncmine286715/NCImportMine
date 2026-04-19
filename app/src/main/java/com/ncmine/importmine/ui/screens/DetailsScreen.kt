@@ -40,6 +40,7 @@ import com.ncmine.importmine.util.AdMobManager
 @Composable
 fun DetailsScreen(
     pack: MinecraftPack,
+    isMinecraftInstalled: Boolean = true,
     onBack: () -> Unit,
     onImportClick: (MinecraftPack) -> Unit
 ) {
@@ -173,6 +174,29 @@ fun DetailsScreen(
             // Botão Principal (SEMPRE COM AD REWARDED PARA IMPORTAR)
             val isZip = pack.originalExtension == "zip"
             
+            if (!isMinecraftInstalled) {
+                Surface(
+                    color = NcError.copy(alpha = 0.1f),
+                    shape = RoundedCornerShape(12.dp),
+                    border = BorderStroke(1.dp, NcError.copy(alpha = 0.5f)),
+                    modifier = Modifier.fillMaxWidth().padding(bottom = 16.dp)
+                ) {
+                    Row(
+                        modifier = Modifier.padding(12.dp),
+                        verticalAlignment = Alignment.CenterVertically
+                    ) {
+                        Icon(Icons.Default.Download, contentDescription = null, tint = NcError)
+                        Spacer(modifier = Modifier.width(12.dp))
+                        Text(
+                            "Minecraft não detectado. Instale-o para importar addons.",
+                            color = NcError,
+                            style = MaterialTheme.typography.bodySmall,
+                            fontWeight = FontWeight.Bold
+                        )
+                    }
+                }
+            }
+
             Button(
                 onClick = { 
                     if (activity != null) {
@@ -184,13 +208,14 @@ fun DetailsScreen(
                         onImportClick(pack)
                     }
                 },
-                enabled = !isImporting,
+                enabled = !isImporting && isMinecraftInstalled,
                 modifier = Modifier
                     .fillMaxWidth()
                     .height(64.dp)
-                    .shadow(12.dp, RoundedCornerShape(16.dp), spotColor = NcGreenNeon),
+                    .shadow(if (isMinecraftInstalled) 12.dp else 0.dp, RoundedCornerShape(16.dp), spotColor = NcGreenNeon),
                 colors = ButtonDefaults.buttonColors(
-                    containerColor = NcGreenNeon
+                    containerColor = if (isMinecraftInstalled) NcGreenNeon else NcBlackSurface,
+                    disabledContainerColor = if (isMinecraftInstalled) NcGreenNeon.copy(alpha = 0.5f) else NcBlackSurface
                 ),
                 shape = RoundedCornerShape(16.dp)
             ) {
@@ -202,24 +227,28 @@ fun DetailsScreen(
                     Icon(
                         imageVector = if (isZip) Icons.Default.Transform else Icons.Default.Gamepad, 
                         contentDescription = null, 
-                        tint = NcBlackDeep
+                        tint = if (isMinecraftInstalled) NcBlackDeep else NcTextMuted
                     )
                     Spacer(modifier = Modifier.width(12.dp))
                     Text(
-                        text = if (isZip) "CONVERTER E IMPORTAR" else "ASSISTIR E IMPORTAR", 
+                        text = if (!isMinecraftInstalled) "MINECRAFT NÃO ENCONTRADO"
+                               else if (isZip) "CONVERTER E IMPORTAR" 
+                               else "ASSISTIR E IMPORTAR", 
                         fontWeight = FontWeight.Black, 
-                        color = NcBlackDeep,
+                        color = if (isMinecraftInstalled) NcBlackDeep else NcTextMuted,
                         fontSize = 14.sp
                     )
                 }
             }
             
-            Text(
-                "Assista um vídeo curto para liberar a importação",
-                color = NcTextMuted,
-                style = MaterialTheme.typography.labelSmall,
-                modifier = Modifier.padding(top = 8.dp)
-            )
+            if (isMinecraftInstalled) {
+                Text(
+                    "Assista um vídeo curto para liberar a importação",
+                    color = NcTextMuted,
+                    style = MaterialTheme.typography.labelSmall,
+                    modifier = Modifier.padding(top = 8.dp)
+                )
+            }
             
             Spacer(modifier = Modifier.height(20.dp))
             

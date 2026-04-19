@@ -153,4 +153,9 @@ object AdMobManager {
     }
 
     fun getBannerAdUnitId(): String = BANNER_AD_UNIT_ID
+
+    /**
+     * Cria uma requisição básica de anúncio
+     */
+    fun createAdRequest(): AdRequest = AdRequest.Builder().build()
 }

@@ -51,7 +51,8 @@ import com.ncmine.importmine.viewmodel.MainViewModel
 fun HomeScreen(
     viewModel: MainViewModel,
     onImportClick: (MinecraftPack) -> Unit,
-    onLegalClick: (String, String) -> Unit
+    onLegalClick: (String, String) -> Unit,
+    onUrlImport: (String) -> Unit
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current
@@ -67,7 +68,7 @@ fun HomeScreen(
                 .statusBarsPadding()
         ) {
             // Header com logo
-            NcHeader(onLegalClick)
+            NcHeader(onLegalClick, onUrlImport)
 
             // Tabs de Navegação
             TabRow(
@@ -129,13 +130,31 @@ fun HomeScreen(
                             showFilters = uiState.selectedTab != 3
                         )
                     }
-                    else -> {
+                    uiState.selectedTab == 0 -> {
                         EmptyState(
                             hasScanned = uiState.scanCompleted,
-                            isTabEmpty = uiState.selectedTab != 0,
                             onScanClick = { viewModel.startFastScan() },
                             onLegalClick = onLegalClick
                         )
+                    }
+                    else -> {
+                        Box(modifier = Modifier.fillMaxSize(), contentAlignment = Alignment.Center) {
+                            Column(horizontalAlignment = Alignment.CenterHorizontally) {
+                                Text(if (uiState.selectedTab == 1) "❤️" else "📜", fontSize = 48.sp)
+                                Spacer(modifier = Modifier.height(16.dp))
+                                Text(
+                                    if (uiState.selectedTab == 1) "Nenhum favorito" else "Histórico vazio",
+                                    color = NcTextPrimary,
+                                    fontWeight = FontWeight.Bold
+                                )
+                                Text(
+                                    if (uiState.selectedTab == 1) "Seus addons favoritos aparecerão aqui." else "Seus arquivos importados aparecerão aqui.",
+                                    color = NcTextSecondary,
+                                    textAlign = TextAlign.Center,
+                                    modifier = Modifier.padding(horizontal = 32.dp)
+                                )
+                            }
+                        }
                     }
                 }
             }
@@ -189,8 +208,13 @@ fun HomeScreen(
 // ============================================================
 
 @Composable
-fun NcHeader(onLegalClick: (String, String) -> Unit) {
+fun NcHeader(
+    onLegalClick: (String, String) -> Unit,
+    onUrlImport: (String) -> Unit
+) {
     var showAbout by remember { mutableStateOf(false) }
+    var showUrlDialog by remember { mutableStateOf(false) }
+    var urlToImport by remember { mutableStateOf("") }
 
     Box(
         modifier = Modifier
@@ -241,19 +265,81 @@ fun NcHeader(onLegalClick: (String, String) -> Unit) {
                 }
             }
 
-            IconButton(
-                onClick = { showAbout = true },
-                modifier = Modifier
-                    .clip(CircleShape)
-                    .background(NcBlackSurface)
-            ) {
-                Icon(
-                    imageVector = Icons.Default.Settings,
-                    contentDescription = "Configurações",
-                    tint = NcGreenNeon
-                )
+            Row {
+                IconButton(
+                    onClick = { showUrlDialog = true },
+                    modifier = Modifier
+                        .padding(end = 8.dp)
+                        .clip(CircleShape)
+                        .background(NcBlackSurface)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Link,
+                        contentDescription = "Importar via Link",
+                        tint = NcGreenNeon
+                    )
+                }
+
+                IconButton(
+                    onClick = { showAbout = true },
+                    modifier = Modifier
+                        .clip(CircleShape)
+                        .background(NcBlackSurface)
+                ) {
+                    Icon(
+                        imageVector = Icons.Default.Settings,
+                        contentDescription = "Configurações",
+                        tint = NcGreenNeon
+                    )
+                }
             }
         }
+    }
+
+    if (showUrlDialog) {
+        AlertDialog(
+            onDismissRequest = { showUrlDialog = false },
+            containerColor = NcBlackCard,
+            title = { Text("Importar via Link", color = NcGreenNeon) },
+            text = {
+                Column {
+                    Text("Cole um link do TeraBox ou direto para o arquivo:", color = NcTextSecondary)
+                    Spacer(Modifier.height(12.dp))
+                    OutlinedTextField(
+                        value = urlToImport,
+                        onValueChange = { urlToImport = it },
+                        modifier = Modifier.fillMaxWidth(),
+                        placeholder = { Text("https://terabox.com/...", color = NcTextMuted) },
+                        colors = OutlinedTextFieldDefaults.colors(
+                            focusedBorderColor = NcGreenNeon,
+                            unfocusedBorderColor = NcBlackBorder,
+                            focusedTextColor = Color.White,
+                            unfocusedTextColor = Color.White
+                        ),
+                        singleLine = true
+                    )
+                }
+            },
+            confirmButton = {
+                Button(
+                    onClick = {
+                        if (urlToImport.isNotBlank()) {
+                            onUrlImport(urlToImport)
+                            showUrlDialog = false
+                            urlToImport = ""
+                        }
+                    },
+                    colors = ButtonDefaults.buttonColors(containerColor = NcGreenNeon)
+                ) {
+                    Text("ABRIR", color = NcBlackDeep)
+                }
+            },
+            dismissButton = {
+                TextButton(onClick = { showUrlDialog = false }) {
+                    Text("CANCELAR", color = NcTextSecondary)
+                }
+            }
+        )
     }
 
     if (showAbout) {
@@ -1386,10 +1472,19 @@ fun NcSnackbar(
 
 @Composable
 fun AdBannerFooter() {
+    val context = LocalContext.current
+    val adView = remember {
+        com.google.android.gms.ads.AdView(context).apply {
+            setAdSize(com.google.android.gms.ads.AdSize.BANNER)
+            adUnitId = com.ncmine.importmine.util.AdMobManager.getBannerAdUnitId()
+            loadAd(com.ncmine.importmine.util.AdMobManager.createAdRequest())
+        }
+    }
+
     Column(
         modifier = Modifier
             .background(AdBannerBackground)
-            .navigationBarsPadding() // Garante que o anúncio não fique sob a barra de navegação
+            .navigationBarsPadding()
     ) {
         Box(
             modifier = Modifier
@@ -1399,20 +1494,13 @@ fun AdBannerFooter() {
         )
         Box(
             modifier = Modifier
-                .fillMaxWidth(),
+                .fillMaxWidth()
+                .height(60.dp),
             contentAlignment = Alignment.Center
         ) {
             androidx.compose.ui.viewinterop.AndroidView(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .height(60.dp),
-                factory = { context ->
-                    com.google.android.gms.ads.AdView(context).apply {
-                        setAdSize(com.google.android.gms.ads.AdSize.LARGE_BANNER)
-                        adUnitId = com.ncmine.importmine.util.AdMobManager.getBannerAdUnitId()
-                        loadAd(com.ncmine.importmine.util.AdMobManager.createAdRequest())
-                    }
-                }
+                modifier = Modifier.fillMaxSize(),
+                factory = { adView }
             )
         }
     }

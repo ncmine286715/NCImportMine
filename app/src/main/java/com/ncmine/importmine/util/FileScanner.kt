@@ -33,25 +33,32 @@ object FileScanner {
      * Escaneia diretórios e emite arquivos encontrados um por um via Flow
      */
     fun scanAllDirectoriesFlow(context: Context): Flow<File> = flow {
-        // 1. Pasta Downloads
+        // List of directories to scan
+        val dirsToScan = mutableListOf<File>()
+        
+        // 1. Downloads folder
         val downloadsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOWNLOADS)
-        if (downloadsDir.exists() && downloadsDir.canRead()) {
-            scanDirectoryFlow(downloadsDir).collect { emit(it) }
-        }
+        if (downloadsDir.exists()) dirsToScan.add(downloadsDir)
 
-        // 2. Pasta Documents
+        // 2. Documents folder
         val documentsDir = Environment.getExternalStoragePublicDirectory(Environment.DIRECTORY_DOCUMENTS)
-        if (documentsDir.exists() && documentsDir.canRead()) {
-            scanDirectoryFlow(documentsDir).collect { emit(it) }
-        }
+        if (documentsDir.exists()) dirsToScan.add(documentsDir)
 
-        // 3. Pasta do Minecraft
+        // 3. Minecraft folder (standard location)
         val minecraftDir = File(Environment.getExternalStorageDirectory(), "games/com.mojang")
-        if (minecraftDir.exists() && minecraftDir.canRead()) {
-            scanDirectoryFlow(minecraftDir, depth = 2).collect { emit(it) }
+        if (minecraftDir.exists()) dirsToScan.add(minecraftDir)
+
+        // 4. Android/data/com.mojang.minecraftpe (if accessible, though usually not on 11+)
+        val androidDataMinecraft = File(Environment.getExternalStorageDirectory(), "Android/data/com.mojang.minecraftpe/files/games/com.mojang")
+        if (androidDataMinecraft.exists()) dirsToScan.add(androidDataMinecraft)
+
+        dirsToScan.forEach { dir ->
+            if (dir.canRead()) {
+                scanDirectoryFlow(dir, depth = if (dir == minecraftDir) 2 else 5).collect { emit(it) }
+            }
         }
 
-        // 4. Raiz (apenas arquivos diretos)
+        // 5. Root (only direct files)
         val externalDir = Environment.getExternalStorageDirectory()
         if (externalDir.exists() && externalDir.canRead()) {
             externalDir.listFiles()?.forEach { file ->
@@ -240,27 +247,28 @@ object FileScanner {
      */
     private fun parseManifest(jsonContent: String): ManifestInfo? {
         return try {
-            // Usa JsonReader com setLenient(true) para aceitar JSONs com comentários ou erros leves
             val reader = com.google.gson.stream.JsonReader(java.io.StringReader(jsonContent))
             reader.isLenient = true
-            val json = JsonParser.parseReader(reader).asJsonObject
+            val jsonElement = JsonParser.parseReader(reader)
+            if (!jsonElement.isJsonObject) return null
+            val json = jsonElement.asJsonObject
 
-            val header = json.getAsJsonObject("header")
-            val name = header?.get("name")?.asString ?: "Pacote Sem Nome"
-            val description = header?.get("description")?.asString ?: ""
-            val uuid = header?.get("uuid")?.asString ?: ""
+            val header = json.getAsJsonObject("header") ?: return null
+            val name = header.get("name")?.asString ?: "Pacote Sem Nome"
+            val description = header.get("description")?.asString ?: ""
+            val uuid = header.get("uuid")?.asString ?: ""
 
             val version = try {
-                val vArr = header?.getAsJsonArray("version")
+                val vArr = header.getAsJsonArray("version")
                 if (vArr != null) {
                     "${vArr[0].asInt}.${vArr[1].asInt}.${vArr[2].asInt}"
                 } else {
-                    header?.get("version")?.asString ?: "1.0.0"
+                    header.get("version")?.asString ?: "1.0.0"
                 }
             } catch (e: Exception) { "1.0.0" }
 
             val minEngineVersion = try {
-                val vArr = header?.getAsJsonArray("min_engine_version")
+                val vArr = header.getAsJsonArray("min_engine_version")
                 if (vArr != null) {
                     "${vArr[0].asInt}.${vArr[1].asInt}.${vArr[2].asInt}"
                 } else { "" }

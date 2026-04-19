@@ -49,7 +49,10 @@ data class MainUiState(
     val showImportSuccess: Boolean = false,
     val scanCompleted: Boolean = false,
     val isMinecraftInstalled: Boolean = false,
-    val lastImportedPack: MinecraftPack? = null
+    val lastImportedPack: MinecraftPack? = null,
+    val downloadInProgress: Boolean = false,
+    val downloadedPack: MinecraftPack? = null,
+    val showDownloadImportDialog: Boolean = false
 )
 
 /**
@@ -135,7 +138,7 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
         loadHistoryAndFavorites()
     }
 
-    private fun checkMinecraftInstallation() {
+    fun checkMinecraftInstallation() {
         val installed = repository.isMinecraftInstalled()
         _uiState.update { it.copy(isMinecraftInstalled = installed) }
     }
@@ -332,6 +335,29 @@ class MainViewModel(application: Application) : AndroidViewModel(application) {
     fun clearFavorites() {
         prefs.clearFavorites()
         loadHistoryAndFavorites()
+    }
+
+    /**
+     * Processa um arquivo baixado recentemente
+     */
+    fun onDownloadCompleted(file: File) {
+        viewModelScope.launch {
+            _uiState.update { it.copy(downloadInProgress = false) }
+            val pack = repository.analyzeFile(file)
+            if (pack != null) {
+                _uiState.update { it.copy(downloadedPack = pack, showDownloadImportDialog = true) }
+            } else {
+                _uiState.update { it.copy(errorMessage = "O arquivo baixado não é um Addon válido para Minecraft.") }
+            }
+        }
+    }
+
+    fun setDownloadInProgress(inProgress: Boolean) {
+        _uiState.update { it.copy(downloadInProgress = inProgress) }
+    }
+
+    fun dismissDownloadImportDialog() {
+        _uiState.update { it.copy(showDownloadImportDialog = false, downloadedPack = null) }
     }
 
     private fun updatePackStatus(packId: String, status: PackStatus) {
